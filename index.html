@@ -1,490 +1,841 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-  <meta charset="utf-8">
-  <meta name="description"
-        content="Deformable Neural Radiance Fields creates free-viewpoint portraits (nerfies) from casually captured videos.">
-  <meta name="keywords" content="Nerfies, D-NeRF, NeRF">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Nerfies: Deformable Neural Radiance Fields</title>
+    <meta charset="utf-8">
+    <meta name="description"
+        content="World models unlock superior spatial and multi-frame reasoning capabilities in VLMs.">
+    <meta name="keywords" content="DyVA, WorldLM, world models, vision-language models, VLMs, multimodal learning">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Can World Models Benefit VLMs for World Dynamics?</title>
 
-  <!-- Global site tag (gtag.js) - Google Analytics -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-PYVRSFMDRL"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-
-    function gtag() {
-      dataLayer.push(arguments);
-    }
-
-    gtag('js', new Date());
-
-    gtag('config', 'G-PYVRSFMDRL');
-  </script>
-
-  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro"
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Inter:wght@400;500;600;700&family=Fira+Code&display=swap"
         rel="stylesheet">
 
-  <link rel="stylesheet" href="./static/css/bulma.min.css">
-  <link rel="stylesheet" href="./static/css/bulma-carousel.min.css">
-  <link rel="stylesheet" href="./static/css/bulma-slider.min.css">
-  <link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
-  <link rel="stylesheet"
-        href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
-  <link rel="stylesheet" href="./static/css/index.css">
-  <link rel="icon" href="./static/images/favicon.svg">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+    <link rel="icon" href="./static/images/favicon.svg">
 
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-  <script defer src="./static/js/fontawesome.all.min.js"></script>
-  <script src="./static/js/bulma-carousel.min.js"></script>
-  <script src="./static/js/bulma-slider.min.js"></script>
-  <script src="./static/js/index.js"></script>
+    <style>
+        /* --- General & Typography --- */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #fdfdff;
+            color: #363636;
+        }
+
+        .title,
+        .subtitle {
+            font-family: 'Google Sans', sans-serif;
+        }
+
+        p {
+            line-height: 1.7;
+        }
+
+        a {
+            color: #3273dc;
+            transition: color 0.3s ease;
+        }
+
+        a:hover {
+            color: #5a00a2;
+        }
+
+        /* --- Section Styling --- */
+        .section {
+            padding: 4rem 1.5rem;
+        }
+
+        .section .title.is-3 {
+            text-align: center;
+            margin-bottom: 3rem;
+            position: relative;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+
+        /* Underline effect for section titles */
+        .section .title.is-3::after {
+            content: '';
+            position: absolute;
+            bottom: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 4px;
+            background: linear-gradient(45deg, #00c6ff, #0072ff, #a200ff);
+            border-radius: 2px;
+        }
+
+        /* --- Hero Section --- */
+        .hero {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(246, 247, 255, 1) 100%);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .publication-title {
+            color: #1a1a1a !important;
+            font-weight: 700 !important;
+        }
+
+        .publication-authors .author-block a {
+            font-weight: 500;
+        }
+
+        /* --- Publication Links / Buttons --- */
+        .publication-links {
+            margin-top: 1.5rem;
+        }
+
+        .publication-links .button {
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border: none;
+        }
+
+        .publication-links .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .publication-links .button.is-dark {
+            background-color: #2c3e50;
+        }
+
+        .publication-links .button.is-dark:hover {
+            background-color: #1a242f;
+        }
+
+        /* --- Teaser Image --- */
+        .hero.teaser img {
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        }
+
+        /* --- DyVA Glowing Text --- */
+        .dyva-text {
+            display: inline-block;
+            font-weight: bold;
+            font-size: 1.25em;
+            background: linear-gradient(45deg, #00c6ff, #0072ff, #a200ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 2px rgba(0, 0, 0, .4));
+            animation: dyva-glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes dyva-glow {
+            from {
+                filter: drop-shadow(0 0 2px rgba(0, 0, 0, .4));
+            }
+
+            to {
+                filter: drop-shadow(0 0 8px rgba(0, 114, 255, .8));
+            }
+        }
+
+        /* --- Framework Section --- */
+        .framework-pipeline ol {
+            counter-reset: step-counter;
+            list-style: none;
+            padding-left: 0;
+            margin-top: 2rem;
+        }
+
+        .framework-pipeline li {
+            margin: 1.5rem 0;
+            padding: 1.5rem 1.5rem 1.5rem 4.5rem;
+            position: relative;
+            background: #fff;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .framework-pipeline li:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+        }
+
+        /* --- Experiment Results / Tables --- */
+        .table-container {
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            border-radius: 8px;
+            border: 1px solid #dbdbdb;
+            overflow-x: auto;   /* ✅ 允许横向滚动 */
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch; /* 移动端更顺滑 */
+        }
+
+        .table {
+            font-size: 0.9em;
+        }
+
+        .table thead {
+            background-color: #2c3e50;
+        }
+
+        .table thead th {
+            color: #fff;
+            font-weight: 600;
+            vertical-align: middle;
+            text-align: center;
+            border-color: #4a4a4a;
+        }
+
+        .table tbody td {
+            vertical-align: middle;
+            text-align: center;
+        }
+
+        .table tbody tr td:first-child {
+            text-align: left;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .table tbody tr:hover {
+            background-color: #eef2ff !important;
+        }
+
+        .dyva-row {
+            background-color: #f3e8ff !important;
+            font-weight: bold;
+        }
+
+        .dyva-row td {
+            color: #5a00a2;
+        }
+
+        .dyva-row td:first-child {
+            color: #5a00a2 !important;
+        }
+
+        /* --- BibTeX Section --- */
+        #BibTeX pre {
+            background-color: #2c3e50;
+            color: #f5f5f5;
+            padding: 2rem;
+            border-radius: 8px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        #BibTeX code {
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9em;
+        }
+
+        /* --- Footer --- */
+        .footer {
+            background-color: #f4f4f4;
+            padding: 3rem 1.5rem;
+        }
+    </style>
 </head>
+
 <body>
 
-<nav class="navbar" role="navigation" aria-label="main navigation">
-  <div class="navbar-brand">
-    <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false">
-      <span aria-hidden="true"></span>
-      <span aria-hidden="true"></span>
-      <span aria-hidden="true"></span>
-    </a>
-  </div>
-  <div class="navbar-menu">
-    <div class="navbar-start" style="flex-grow: 1; justify-content: center;">
-      <a class="navbar-item" href="https://keunhong.com">
-      <span class="icon">
-          <i class="fas fa-home"></i>
-      </span>
-      </a>
+    <section class="hero">
+        <div class="hero-body">
+            <div class="container is-max-desktop">
+                <div class="columns is-centered">
+                    <div class="column has-text-centered">
+                        <h1 class="title is-1 publication-title">Can World Models Benefit VLMs for World Dynamics?</h1>
+                        <div class="is-size-5 publication-authors">
+                            <span class="author-block">
+                                <a href="https://scholar.google.com/citations?user=TJAXRy8AAAAJ&hl=zh-CN">Kevin
+                                    Zhang</a><sup>1</sup><sup>*</sup>,
+                            </span>
+                            <span class="author-block">
+                                <a href="https://kuangzhige.github.io">Kuangzhi Ge</a><sup>1</sup><sup>*</sup>,
+                            </span>
+                            <span class="author-block">
+                                <a href="https://github.com/litwellchi">Xiaowei Chi</a><sup>2</sup><sup>*</sup>,
+                            </span>
+                            <span class="author-block">
+                                <a href="https://zrrskywalker.github.io">Renrui Zhang</a><sup>3</sup>,
+                            </span>
+                            <span class="author-block">
+                                <a href="https://github.com/Daniel-Shii">Shaojun Shi</a><sup>1</sup>,
+                            </span>
+                            <br>
+                            <span class="author-block">
+                                <a href="https://dong-zhen.com/">Zhen Dong</a><sup>4</sup>,
+                            </span>
+                            <span class="author-block">
+                                <a href="https://facultyprofiles.hkust.edu.hk/profiles.php?profile=sirui-han-siruihan">Sirui
+                                    Han</a><sup>2</sup><sup>&#9993;</sup>,
+                            </span>
+                            <span class="author-block">
+                                <a href="https://www.shanghangzhang.com/">Shanghang
+                                    Zhang</a><sup>1</sup><sup>&#9993;</sup>
+                            </span>
+                        </div>
 
-      <div class="navbar-item has-dropdown is-hoverable">
-        <a class="navbar-link">
-          More Research
-        </a>
-        <div class="navbar-dropdown">
-          <a class="navbar-item" href="https://hypernerf.github.io">
-            HyperNeRF
-          </a>
-          <a class="navbar-item" href="https://nerfies.github.io">
-            Nerfies
-          </a>
-          <a class="navbar-item" href="https://latentfusion.github.io">
-            LatentFusion
-          </a>
-          <a class="navbar-item" href="https://photoshape.github.io">
-            PhotoShape
-          </a>
+                        <div class="is-size-5 publication-authors" style="margin-top: 1rem;">
+                            <span class="author-block"><sup>1</sup>Peking University</span>
+                            <span class="author-block"><sup>2</sup>Hong Kong University of Science and Technology</span>
+                            <span class="author-block"><sup>3</sup>Chinese University of Hong Kong</span>
+                            <span class="author-block"><sup>4</sup>University of California, Santa Barbara</span>
+                            <br>
+                            <span class="author-block"
+                                style="margin-top: 0.5rem; display: inline-block;"><sup>*</sup>Equal contribution</span>
+                            <span class="author-block"><sup>&#9993;</sup>Corresponding Author</span>
+                        </div>
+
+                        <div class="column has-text-centered">
+                            <div class="publication-links">
+                                <span class="link-block">
+                                    <a href="./static/assets/DyVA.pdf"
+                                        class="external-link button is-normal is-rounded is-dark">
+                                        <span class="icon"><i class="fas fa-file-pdf"></i></span>
+                                        <span>Paper</span>
+                                    </a>
+                                </span>
+                                <span class="link-block">
+                                    <a href="https://arxiv.org/abs/2506.18897"
+                                        class="external-link button is-normal is-rounded is-dark">
+                                        <span class="icon"><i class="ai ai-arxiv"></i></span>
+                                        <span>arXiv</span>
+                                    </a>
+                                </span>
+                                <span class="link-block">
+                                    <a href="https://github.com/zyzkevin/dyva-worldlm"
+                                        class="external-link button is-normal is-rounded is-dark">
+                                        <span class="icon"><i class="fab fa-github"></i></span>
+                                        <span>Code</span>
+                                    </a>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
+    </section>
 
-  </div>
-</nav>
+    <section class="hero teaser">
+        <div class="container is-max-desktop">
+            <div class="hero-body">
+                <img src="./static/images/main_01.png" alt="Teaser Image" width="100%" />
+            </div>
+        </div>
+    </section>
 
+    <section class="section">
+        <div class="container is-max-desktop">
+            <div class="columns is-centered">
+                <div class="column is-four-fifths">
+                    <h2 class="title is-3">Abstract</h2>
+                    <div class="content has-text-justified">
+                        <p>
+                            Trained on internet-scale video data, generative world models are increasingly recognized as
+                            powerful world simulators that can generate consistent and plausible dynamics over
+                            structure, motion, and
+                            physics. This raises a natural question: <strong><em>with the advent of strong video
+                                    foundational models, might
+                                    they supplant conventional vision encoder paradigms for general-purpose multimodal
+                                    understanding?</em></strong> While recent studies
+                            have begun to explore the potential of world models on common vision tasks, these
+                            explorations typically lack a systematic investigation of generic, multimodal tasks. In this
+                            work, we strive to
+                            investigate its current capabilities, when these priors are transferred into a
+                            Vision-Language Model (VLM): we re-purpose a video diffusion model as a <em>generative
+                                encoder</em>, queried for a single denoising step, and treat the resulting latents as an
+                            additional set of visual
+                            embeddings. We empirically
+                            investigate this class of models, which we refer to as <strong>World-Language Models
+                                (WorldLMs)</strong>, and we
+                            find that generative encoders can indeed capture latents useful for downstream
+                            understanding, showing distinctions
+                            from conventional vision encoders. Naming our best-performing variant
+                            <strong>Dy</strong>namic <strong>V</strong>ision <strong>A</strong>ligner
+                            (<span class="dyva-text">DyVA</span>), we further discover that this method significantly
+                            enhances spatial-reasoning abilities
+                            and enables single-image models to perform multi-frame reasoning.
+                        </p>
+                        <p>
+                            Through the curation of a suite of visual-reasoning tasks, we find DyVA to surpass both
+                            open-source and proprietary
+                            baselines on out-of-domain tasks, achieving state-of-the-art or comparable performance. We
+                            attribute these gains to
+                            WorldLM's inherited motion-consistency internalization from video pre-training. Finally, we
+                            systematically explore extensive model designs to highlight promising directions for future
+                            work. We hope our study can pave the way for a new family of VLMs that leverage priors from
+                            world
+                            models and are on a promising path towards generalist vision learners. Our code is available
+                            at <a href="https://github.com/zyzkevin/dyva-worldlm">DyVA-WorldLM</a>.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 
-<section class="hero">
-  <div class="hero-body">
-    <div class="container is-max-desktop">
-      <div class="columns is-centered">
-        <div class="column has-text-centered">
-          <h1 class="title is-1 publication-title">Nerfies: Deformable Neural Radiance Fields</h1>
-          <div class="is-size-5 publication-authors">
-            <span class="author-block">
-              <a href="https://keunhong.com">Keunhong Park</a><sup>1</sup>,</span>
-            <span class="author-block">
-              <a href="https://utkarshsinha.com">Utkarsh Sinha</a><sup>2</sup>,</span>
-            <span class="author-block">
-              <a href="https://jonbarron.info">Jonathan T. Barron</a><sup>2</sup>,
-            </span>
-            <span class="author-block">
-              <a href="http://sofienbouaziz.com">Sofien Bouaziz</a><sup>2</sup>,
-            </span>
-            <span class="author-block">
-              <a href="https://www.danbgoldman.com">Dan B Goldman</a><sup>2</sup>,
-            </span>
-            <span class="author-block">
-              <a href="https://homes.cs.washington.edu/~seitz/">Steven M. Seitz</a><sup>1,2</sup>,
-            </span>
-            <span class="author-block">
-              <a href="http://www.ricardomartinbrualla.com">Ricardo Martin-Brualla</a><sup>2</sup>
-            </span>
-          </div>
+    <section class="section" style="background-color: #f9faff;">
+        <div class="container is-max-desktop">
+            <h2 class="title is-3">Framework</h2>
+            <div class="content has-text-justified">
+                <figure class="image">
+                    <img src="./static/images/pipeline_01.png" alt="WorldLM Pipeline"
+                        style="border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1);" />
+                </figure>
+                <div style="margin-top: 2rem;">
+                    <p>
+                        Our <strong>World-Language Model (WorldLM)</strong> framework introduces a new way of combining
+                        static and dynamic visual representations for multimodal reasoning. Unlike conventional VLMs,
+                        which rely solely on static image encoders, WorldLM integrates world-model priors learned from
+                        video generation. The pipeline works as follows:
+                    </p>
 
-          <div class="is-size-5 publication-authors">
-            <span class="author-block"><sup>1</sup>University of Washington,</span>
-            <span class="author-block"><sup>2</sup>Google Research</span>
-          </div>
+                    <div>
+                        <ol>
+                            <li>
+                                <span><strong>Semantic Encoder (SigLIP)</strong>: Extracts high-level, text-aligned
+                                    visual features from the input image.</span>
+                            </li>
+                            <li>
+                                <span><strong>Generative Encoder (SVD)</strong>: Produces dynamics-aware latents by
+                                    simulating a single denoising step, capturing motion priors and spatial consistency
+                                    learned from video pre-training.</span>
+                            </li>
+                            <li>
+                                <span><strong>Feature Projection & Fusion</strong>: Semantic and dynamic features are
+                                    projected into a shared embedding space via lightweight projectors, then
+                                    concatenated into a unified visual token sequence.</span>
+                            </li>
+                            <li>
+                                <span><strong>LLM Decoder</strong>: The fused token sequence is fed into an
+                                    autoregressive language model which generates the final answer or explanation
+                                    conditioned on the input prompt.</span>
+                            </li>
+                        </ol>
+                    </div>
 
-          <div class="column has-text-centered">
-            <div class="publication-links">
-              <!-- PDF Link. -->
-              <span class="link-block">
-                <a href="https://arxiv.org/pdf/2011.12948"
-                   class="external-link button is-normal is-rounded is-dark">
-                  <span class="icon">
-                      <i class="fas fa-file-pdf"></i>
-                  </span>
-                  <span>Paper</span>
-                </a>
-              </span>
-              <span class="link-block">
-                <a href="https://arxiv.org/abs/2011.12948"
-                   class="external-link button is-normal is-rounded is-dark">
-                  <span class="icon">
-                      <i class="ai ai-arxiv"></i>
-                  </span>
-                  <span>arXiv</span>
-                </a>
-              </span>
-              <!-- Video Link. -->
-              <span class="link-block">
-                <a href="https://www.youtube.com/watch?v=MrKrnHhk8IA"
-                   class="external-link button is-normal is-rounded is-dark">
-                  <span class="icon">
-                      <i class="fab fa-youtube"></i>
-                  </span>
-                  <span>Video</span>
-                </a>
-              </span>
-              <!-- Code Link. -->
-              <span class="link-block">
-                <a href="https://github.com/google/nerfies"
-                   class="external-link button is-normal is-rounded is-dark">
-                  <span class="icon">
-                      <i class="fab fa-github"></i>
-                  </span>
-                  <span>Code</span>
-                  </a>
-              </span>
-              <!-- Dataset Link. -->
-              <span class="link-block">
-                <a href="https://github.com/google/nerfies/releases/tag/0.1"
-                   class="external-link button is-normal is-rounded is-dark">
-                  <span class="icon">
-                      <i class="far fa-images"></i>
-                  </span>
-                  <span>Data</span>
-                  </a>
+                    <div style="margin-top: 2rem; color: #444; text-align: left; font-size: 1.1rem;">
+                        <p style="margin:0;">
+                            This design allows the model to go beyond static description and instead envision future
+                            possibilities. We name the best-performing variant of this family of WorldLMs
+                            <strong>Dy</strong>namic <strong>V</strong>ision <strong>A</strong>ligner
+                            (<span class="dyva-text">DyVA</span>).
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section">
+        <div class="container is-max-desktop">
+            <h2 class="title is-3">Experiment Results</h2>
+            <div class="content has-text-left" style="max-width: 1000px; margin: 0 auto 3rem auto;">
+                <p>
+                    We evaluate DyVA on a comprehensive suite of out-of-domain (OOD) benchmarks. DyVA, despite being
+                    trained only on single images, achieves state-of-the-art performance, surpassing strong baselines
+                    including GPT-4o.
+                </p>
             </div>
 
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section class="hero teaser">
-  <div class="container is-max-desktop">
-    <div class="hero-body">
-      <video id="teaser" autoplay muted loop playsinline height="100%">
-        <source src="./static/videos/teaser.mp4"
-                type="video/mp4">
-      </video>
-      <h2 class="subtitle has-text-centered">
-        <span class="dnerf">Nerfies</span> turns selfie videos from your phone into
-        free-viewpoint
-        portraits.
-      </h2>
-    </div>
-  </div>
-</section>
-
-
-<section class="hero is-light is-small">
-  <div class="hero-body">
-    <div class="container">
-      <div id="results-carousel" class="carousel results-carousel">
-        <div class="item item-steve">
-          <video poster="" id="steve" autoplay controls muted loop playsinline height="100%">
-            <source src="./static/videos/steve.mp4"
-                    type="video/mp4">
-          </video>
-        </div>
-        <div class="item item-chair-tp">
-          <video poster="" id="chair-tp" autoplay controls muted loop playsinline height="100%">
-            <source src="./static/videos/chair-tp.mp4"
-                    type="video/mp4">
-          </video>
-        </div>
-        <div class="item item-shiba">
-          <video poster="" id="shiba" autoplay controls muted loop playsinline height="100%">
-            <source src="./static/videos/shiba.mp4"
-                    type="video/mp4">
-          </video>
-        </div>
-        <div class="item item-fullbody">
-          <video poster="" id="fullbody" autoplay controls muted loop playsinline height="100%">
-            <source src="./static/videos/fullbody.mp4"
-                    type="video/mp4">
-          </video>
-        </div>
-        <div class="item item-blueshirt">
-          <video poster="" id="blueshirt" autoplay controls muted loop playsinline height="100%">
-            <source src="./static/videos/blueshirt.mp4"
-                    type="video/mp4">
-          </video>
-        </div>
-        <div class="item item-mask">
-          <video poster="" id="mask" autoplay controls muted loop playsinline height="100%">
-            <source src="./static/videos/mask.mp4"
-                    type="video/mp4">
-          </video>
-        </div>
-        <div class="item item-coffee">
-          <video poster="" id="coffee" autoplay controls muted loop playsinline height="100%">
-            <source src="./static/videos/coffee.mp4"
-                    type="video/mp4">
-          </video>
-        </div>
-        <div class="item item-toby">
-          <video poster="" id="toby" autoplay controls muted loop playsinline height="100%">
-            <source src="./static/videos/toby2.mp4"
-                    type="video/mp4">
-          </video>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-
-<section class="section">
-  <div class="container is-max-desktop">
-    <!-- Abstract. -->
-    <div class="columns is-centered has-text-centered">
-      <div class="column is-four-fifths">
-        <h2 class="title is-3">Abstract</h2>
-        <div class="content has-text-justified">
-          <p>
-            We present the first method capable of photorealistically reconstructing a non-rigidly
-            deforming scene using photos/videos captured casually from mobile phones.
-          </p>
-          <p>
-            Our approach augments neural radiance fields
-            (NeRF) by optimizing an
-            additional continuous volumetric deformation field that warps each observed point into a
-            canonical 5D NeRF.
-            We observe that these NeRF-like deformation fields are prone to local minima, and
-            propose a coarse-to-fine optimization method for coordinate-based models that allows for
-            more robust optimization.
-            By adapting principles from geometry processing and physical simulation to NeRF-like
-            models, we propose an elastic regularization of the deformation field that further
-            improves robustness.
-          </p>
-          <p>
-            We show that <span class="dnerf">Nerfies</span> can turn casually captured selfie
-            photos/videos into deformable NeRF
-            models that allow for photorealistic renderings of the subject from arbitrary
-            viewpoints, which we dub <i>"nerfies"</i>. We evaluate our method by collecting data
-            using a
-            rig with two mobile phones that take time-synchronized photos, yielding train/validation
-            images of the same pose at different viewpoints. We show that our method faithfully
-            reconstructs non-rigidly deforming scenes and reproduces unseen views with high
-            fidelity.
-          </p>
-        </div>
-      </div>
-    </div>
-    <!--/ Abstract. -->
-
-    <!-- Paper video. -->
-    <div class="columns is-centered has-text-centered">
-      <div class="column is-four-fifths">
-        <h2 class="title is-3">Video</h2>
-        <div class="publication-video">
-          <iframe src="https://www.youtube.com/embed/MrKrnHhk8IA?rel=0&amp;showinfo=0"
-                  frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
-        </div>
-      </div>
-    </div>
-    <!--/ Paper video. -->
-  </div>
-</section>
-
-
-<section class="section">
-  <div class="container is-max-desktop">
-
-    <div class="columns is-centered">
-
-      <!-- Visual Effects. -->
-      <div class="column">
-        <div class="content">
-          <h2 class="title is-3">Visual Effects</h2>
-          <p>
-            Using <i>nerfies</i> you can create fun visual effects. This Dolly zoom effect
-            would be impossible without nerfies since it would require going through a wall.
-          </p>
-          <video id="dollyzoom" autoplay controls muted loop playsinline height="100%">
-            <source src="./static/videos/dollyzoom-stacked.mp4"
-                    type="video/mp4">
-          </video>
-        </div>
-      </div>
-      <!--/ Visual Effects. -->
-
-      <!-- Matting. -->
-      <div class="column">
-        <h2 class="title is-3">Matting</h2>
-        <div class="columns is-centered">
-          <div class="column content">
-            <p>
-              As a byproduct of our method, we can also solve the matting problem by ignoring
-              samples that fall outside of a bounding box during rendering.
+            <h3 class="title is-4" style="text-align: left; margin-bottom: 1rem;">Multi-Image Benchmarks</h3>
+            <p class="has-text-left is-size-6" style="margin-bottom: 1.5rem;">
+                Performance comparison on <strong><a href="https://github.com/arijitray1993/SAT">SAT Synthetic</a></strong>, <strong><a href="https://runsenxu.com/projects/MMSI_Bench/">MMSI-Bench</a></strong>, and
+                <strong><a href="https://mind-cube.github.io/">MindCube</a></strong>.
+                DyVA excels in these OOD tasks without multi-image training. Highest averages are in bold.
             </p>
-            <video id="matting-video" controls playsinline height="100%">
-              <source src="./static/videos/matting.mp4"
-                      type="video/mp4">
-            </video>
-          </div>
-
-        </div>
-      </div>
-    </div>
-    <!--/ Matting. -->
-
-    <!-- Animation. -->
-    <div class="columns is-centered">
-      <div class="column is-full-width">
-        <h2 class="title is-3">Animation</h2>
-
-        <!-- Interpolating. -->
-        <h3 class="title is-4">Interpolating states</h3>
-        <div class="content has-text-justified">
-          <p>
-            We can also animate the scene by interpolating the deformation latent codes of two input
-            frames. Use the slider here to linearly interpolate between the left frame and the right
-            frame.
-          </p>
-        </div>
-        <div class="columns is-vcentered interpolation-panel">
-          <div class="column is-3 has-text-centered">
-            <img src="./static/images/interpolate_start.jpg"
-                 class="interpolation-image"
-                 alt="Interpolate start reference image."/>
-            <p>Start Frame</p>
-          </div>
-          <div class="column interpolation-video-column">
-            <div id="interpolation-image-wrapper">
-              Loading...
+            <div class="table-container">
+                <table class="table is-bordered is-striped is-hoverable is-fullwidth">
+                    <thead>
+                        <tr>
+                            <th rowspan="2">Model</th>
+                            <th colspan="6">SAT Synthetic</th>
+                            <th colspan="4">MindCube</th>
+                            <th colspan="12">MMSI-Bench</th>
+                        </tr>
+                        <tr>
+                            <th>Obj Move.</th>
+                            <th>Act. Seq.</th>
+                            <th>Act. Cons.</th>
+                            <th>Goal Aim</th>
+                            <th>Persp.</th>
+                            <th>Avg.</th>
+                            <th>Rot.</th>
+                            <th>Among</th>
+                            <th>Around</th>
+                            <th>Avg.</th>
+                            <th>Cam-Cam</th>
+                            <th>Obj-Obj</th>
+                            <th>Reg-Reg</th>
+                            <th>Cam-Obj</th>
+                            <th>Obj-Reg</th>
+                            <th>Cam-Reg</th>
+                            <th>Means</th>
+                            <th>Appr</th>
+                            <th>Cam</th>
+                            <th>Obj</th>
+                            <th>MSR</th>
+                            <th>Avg.</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><a href="https://arxiv.org/abs/2502.13923">Qwen2.5-VL-7B</a></td>
+                            <td>79.29</td>
+                            <td>84.70</td>
+                            <td>47.83</td>
+                            <td>25.84</td>
+                            <td>35.17</td>
+                            <td>53.16</td>
+                            <td>38.76</td>
+                            <td>29.50</td>
+                            <td>21.35</td>
+                            <td>29.26</td>
+                            <td>32.3</td>
+                            <td>27.7</td>
+                            <td>29.6</td>
+                            <td>32.6</td>
+                            <td>24.7</td>
+                            <td>32.5</td>
+                            <td>26.6</td>
+                            <td>27.3</td>
+                            <td>16.2</td>
+                            <td>31.6</td>
+                            <td>30.3</td>
+                            <td>28.70</td>
+                        </tr>
+                        <tr>
+                            <td><a href="https://internvl.github.io/blog/2024-12-05-InternVL-2.5/">Intern2.5-VL-8B</a></td>
+                            <td>77.74</td>
+                            <td>55.49</td>
+                            <td>53.74</td>
+                            <td>15.03</td>
+                            <td>32.61</td>
+                            <td>48.06</td>
+                            <td>18.68</td>
+                            <td>36.45</td>
+                            <td>18.20</td>
+                            <td>18.68</td>
+                            <td>24.7</td>
+                            <td>24.5</td>
+                            <td>24.7</td>
+                            <td>25.6</td>
+                            <td>29.4</td>
+                            <td>26.5</td>
+                            <td>25.0</td>
+                            <td>18.2</td>
+                            <td>20.3</td>
+                            <td>39.5</td>
+                            <td>25.8</td>
+                            <td>25.90</td>
+                        </tr>
+                        <tr>
+                            <td><a href="https://llava-vl.github.io/blog/2024-08-05-llava-onevision/">LLaVA-OneVision-7B</a></td>
+                            <td>71.10</td>
+                            <td>21.64</td>
+                            <td>49.85</td>
+                            <td>31.76</td>
+                            <td>35.43</td>
+                            <td>43.24</td>
+                            <td>36.45</td>
+                            <td>48.42</td>
+                            <td>44.09</td>
+                            <td>47.43</td>
+                            <td>20.4</td>
+                            <td>33.0</td>
+                            <td>29.6</td>
+                            <td>29.1</td>
+                            <td>25.9</td>
+                            <td>30.1</td>
+                            <td>29.7</td>
+                            <td>25.8</td>
+                            <td>18.9</td>
+                            <td>34.2</td>
+                            <td>11.6</td>
+                            <td>24.50</td>
+                        </tr>
+                        <tr>
+                            <td><a href="https://openai.com/index/hello-gpt-4o/">GPT-4o</a></td>
+                            <td>61.50</td>
+                            <td>33.20</td>
+                            <td>47.60</td>
+                            <td>67.50</td>
+                            <td>37.50</td>
+                            <td>49.40</td>
+                            <td>40.17</td>
+                            <td>29.16</td>
+                            <td>38.81</td>
+                            <td>38.81</td>
+                            <td>34.4</td>
+                            <td>24.5</td>
+                            <td>23.5</td>
+                            <td>19.8</td>
+                            <td>37.6</td>
+                            <td>27.7</td>
+                            <td>32.8</td>
+                            <td>31.8</td>
+                            <td>35.1</td>
+                            <td>36.8</td>
+                            <td>30.8</td>
+                            <td><strong>30.30</strong></td>
+                        </tr>
+                        <tr class="dyva-row">
+                            <td>DyVA-7B</td>
+                            <td>49.15</td>
+                            <td>57.81</td>
+                            <td>49.25</td>
+                            <td>53.38</td>
+                            <td>40.44</td>
+                            <td>49.51</td>
+                            <td>37.70</td>
+                            <td>43.10</td>
+                            <td>49.00</td>
+                            <td>44.62</td>
+                            <td>21.5</td>
+                            <td>30.9</td>
+                            <td>25.9</td>
+                            <td>31.4</td>
+                            <td>27.1</td>
+                            <td>20.5</td>
+                            <td>35.9</td>
+                            <td>24.2</td>
+                            <td>13.5</td>
+                            <td>19.7</td>
+                            <td>24.2</td>
+                            <td>24.90</td>
+                        </tr>
+                        <tr class="dyva-row">
+                            <td>DyVA-Qwen2.5-7B</td>
+                            <td>78.83</td>
+                            <td>62.13</td>
+                            <td>49.85</td>
+                            <td>51.86</td>
+                            <td>41.72</td>
+                            <td><strong>55.24</strong></td>
+                            <td>37.20</td>
+                            <td>39.10</td>
+                            <td>51.70</td>
+                            <td><strong>49.80</strong></td>
+                            <td>15.1</td>
+                            <td>33.0</td>
+                            <td>25.9</td>
+                            <td>33.7</td>
+                            <td>35.3</td>
+                            <td>30.1</td>
+                            <td>32.8</td>
+                            <td>25.8</td>
+                            <td>17.6</td>
+                            <td>27.6</td>
+                            <td>29.3</td>
+                            <td>28.00</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
-            <input class="slider is-fullwidth is-large is-info"
-                   id="interpolation-slider"
-                   step="1" min="0" max="100" value="0" type="range">
-          </div>
-          <div class="column is-3 has-text-centered">
-            <img src="./static/images/interpolate_end.jpg"
-                 class="interpolation-image"
-                 alt="Interpolation end reference image."/>
-            <p class="is-bold">End Frame</p>
-          </div>
+
+            <h3 class="title is-4" style="text-align: left; margin-top: 4rem; margin-bottom: 1rem;">Single-Image
+                Benchmarks</h3>
+            <p class="has-text-left is-size-6" style="margin-bottom: 1.5rem;">
+                Performance on <strong><a href="https://github.com/cambridgeltl/visual-spatial-reasoning">VSR</a></strong>, <strong><a href="https://www.manojacharya.com/tallyqa.html">TallyQA</a></strong>, <strong><a href="https://github.com/FatemehShiri/Spatial-MM">SpatialMM-Obj</a></strong>, and
+                <strong><a href="https://3dsrbench.github.io/">3DSR-Bench-real</a></strong>.
+                DyVA surpasses all baselines in zero-shot inference. Highest values are bolded.
+            </p>
+            <div class="table-container">
+                <table class="table is-bordered is-striped is-hoverable is-fullwidth">
+                    <thead>
+                        <tr>
+                            <th rowspan="2">Models</th>
+                            <th rowspan="2">Data</th>
+                            <th colspan="8">VSR</th>
+                            <th>TallyQA</th>
+                            <th colspan="3">SpatialMM-Obj</th>
+                            <th colspan="5">3DSR-Bench-real</th>
+                        </tr>
+                        <tr>
+                            <th>Topo.</th>
+                            <th>Prox.</th>
+                            <th>Proj.</th>
+                            <th>Direc.</th>
+                            <th>Adj.</th>
+                            <th>Orien.</th>
+                            <th>Unall.</th>
+                            <th>Avg.</th>
+                            <th>Avg.</th>
+                            <th>1-obj</th>
+                            <th>2-obj</th>
+                            <th>Avg.</th>
+                            <th>H.</th>
+                            <th>L.</th>
+                            <th>O.</th>
+                            <th>M.</th>
+                            <th>Avg.</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><a href="https://llava-vl.github.io/">LLaVA-v1.5-7B</a></td>
+                            <td>558k+665k</td>
+                            <td>52.24</td>
+                            <td>50.00</td>
+                            <td>54.77</td>
+                            <td>50.00</td>
+                            <td>50.86</td>
+                            <td>48.98</td>
+                            <td>57.50</td>
+                            <td>52.94</td>
+                            <td>58.74</td>
+                            <td>57.37</td>
+                            <td>44.87</td>
+                            <td>48.91</td>
+                            <td>55.42</td>
+                            <td>57.82</td>
+                            <td>26.09</td>
+                            <td>39.42</td>
+                            <td>45.02</td>
+                        </tr>
+                        <tr>
+                            <td><a href="https://github.com/TRI-ML/prismatic-vlms">Prism-SigLIP-7B</a></td>
+                            <td>665k</td>
+                            <td>67.48</td>
+                            <td>62.50</td>
+                            <td>65.63</td>
+                            <td>66.67</td>
+                            <td>55.17</td>
+                            <td>55.10</td>
+                            <td>67.50</td>
+                            <td>64.97</td>
+                            <td>62.25</td>
+                            <td>62.54</td>
+                            <td>46.77</td>
+                            <td>51.86</td>
+                            <td>52.28</td>
+                            <td>60.22</td>
+                            <td>27.23</td>
+                            <td>42.17</td>
+                            <td>46.55</td>
+                        </tr>
+                        <tr>
+                            <td><a href="https://github.com/TRI-ML/prismatic-vlms">Prism-DINOSigLIP-7B</a></td>
+                            <td>665k</td>
+                            <td>71.34</td>
+                            <td>59.38</td>
+                            <td>65.63</td>
+                            <td>64.29</td>
+                            <td>53.45</td>
+                            <td>48.98</td>
+                            <td>52.50</td>
+                            <td>65.46</td>
+                            <td>62.93</td>
+                            <td>58.56</td>
+                            <td>47.72</td>
+                            <td>51.22</td>
+                            <td>56.85</td>
+                            <td>59.42</td>
+                            <td>27.23</td>
+                            <td>38.97</td>
+                            <td>45.82</td>
+                        </tr>
+                        <tr class="dyva-row">
+                            <td>DyVA-7B</td>
+                            <td>665k</td>
+                            <td>68.90</td>
+                            <td>68.75</td>
+                            <td>66.74</td>
+                            <td>66.67</td>
+                            <td>66.38</td>
+                            <td>61.22</td>
+                            <td>57.50</td>
+                            <td><strong>67.10</strong></td>
+                            <td>59.47</td>
+                            <td>54.78</td>
+                            <td>46.29</td>
+                            <td>49.03</td>
+                            <td>53.71</td>
+                            <td>57.60</td>
+                            <td>27.23</td>
+                            <td>40.80</td>
+                            <td>45.41</td>
+                        </tr>
+                        <tr class="dyva-row">
+                            <td>DyVA-Qwen2.5-7B</td>
+                            <td>665k</td>
+                            <td>66.67</td>
+                            <td>71.88</td>
+                            <td>68.74</td>
+                            <td>61.90</td>
+                            <td>62.93</td>
+                            <td>40.82</td>
+                            <td>55.00</td>
+                            <td>65.63</td>
+                            <td><strong>68.11</strong></td>
+                            <td>62.74</td>
+                            <td>47.53</td>
+                            <td><strong>52.44</strong></td>
+                            <td>52.57</td>
+                            <td>54.51</td>
+                            <td>27.23</td>
+                            <td>49.60</td>
+                            <td><strong>47.16</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
-        <br/>
-        <!--/ Interpolating. -->
+    </section>
 
-        <!-- Re-rendering. -->
-        <h3 class="title is-4">Re-rendering the input video</h3>
-        <div class="content has-text-justified">
-          <p>
-            Using <span class="dnerf">Nerfies</span>, you can re-render a video from a novel
-            viewpoint such as a stabilized camera by playing back the training deformations.
-          </p>
-        </div>
-        <div class="content has-text-centered">
-          <video id="replay-video"
-                 controls
-                 muted
-                 preload
-                 playsinline
-                 width="75%">
-            <source src="./static/videos/replay.mp4"
-                    type="video/mp4">
-          </video>
-        </div>
-        <!--/ Re-rendering. -->
-
-      </div>
-    </div>
-    <!--/ Animation. -->
-
-
-    <!-- Concurrent Work. -->
-    <div class="columns is-centered">
-      <div class="column is-full-width">
-        <h2 class="title is-3">Related Links</h2>
-
-        <div class="content has-text-justified">
-          <p>
-            There's a lot of excellent work that was introduced around the same time as ours.
-          </p>
-          <p>
-            <a href="https://arxiv.org/abs/2104.09125">Progressive Encoding for Neural Optimization</a> introduces an idea similar to our windowed position encoding for coarse-to-fine optimization.
-          </p>
-          <p>
-            <a href="https://www.albertpumarola.com/research/D-NeRF/index.html">D-NeRF</a> and <a href="https://gvv.mpi-inf.mpg.de/projects/nonrigid_nerf/">NR-NeRF</a>
-            both use deformation fields to model non-rigid scenes.
-          </p>
-          <p>
-            Some works model videos with a NeRF by directly modulating the density, such as <a href="https://video-nerf.github.io/">Video-NeRF</a>, <a href="https://www.cs.cornell.edu/~zl548/NSFF/">NSFF</a>, and <a href="https://neural-3d-video.github.io/">DyNeRF</a>
-          </p>
-          <p>
-            There are probably many more by the time you are reading this. Check out <a href="https://dellaert.github.io/NeRF/">Frank Dellart's survey on recent NeRF papers</a>, and <a href="https://github.com/yenchenlin/awesome-NeRF">Yen-Chen Lin's curated list of NeRF papers</a>.
-          </p>
-        </div>
-      </div>
-    </div>
-    <!--/ Concurrent Work. -->
-
-  </div>
-</section>
-
-
-<section class="section" id="BibTeX">
-  <div class="container is-max-desktop content">
-    <h2 class="title">BibTeX</h2>
-    <pre><code>@article{park2021nerfies,
-  author    = {Park, Keunhong and Sinha, Utkarsh and Barron, Jonathan T. and Bouaziz, Sofien and Goldman, Dan B and Seitz, Steven M. and Martin-Brualla, Ricardo},
-  title     = {Nerfies: Deformable Neural Radiance Fields},
-  journal   = {ICCV},
-  year      = {2021},
+    <section class="section" id="BibTeX" style="background-color: #f9faff;">
+        <div class="container is-max-desktop content">
+            <h2 class="title is-3">BibTeX</h2>
+            <pre><code>@article{zhang2024can,
+    title={Can World Models Benefit VLMs for World Dynamics?},
+    author={Zhang, Kevin and Ge, Kuangzhi and Chi, Xiaowei and Zhang, Renrui and Shi, Shaojun and Dong, Zhen and Han, Sirui and Zhang, Shanghang},
+    journal={arXiv preprint arXiv:2506.18897},
+    year={2024}
 }</code></pre>
-  </div>
-</section>
-
-
-<footer class="footer">
-  <div class="container">
-    <div class="content has-text-centered">
-      <a class="icon-link"
-         href="./static/videos/nerfies_paper.pdf">
-        <i class="fas fa-file-pdf"></i>
-      </a>
-      <a class="icon-link" href="https://github.com/keunhong" class="external-link" disabled>
-        <i class="fab fa-github"></i>
-      </a>
-    </div>
-    <div class="columns is-centered">
-      <div class="column is-8">
-        <div class="content">
-          <p>
-            This website is licensed under a <a rel="license"
-                                                href="http://creativecommons.org/licenses/by-sa/4.0/">Creative
-            Commons Attribution-ShareAlike 4.0 International License</a>.
-          </p>
-          <p>
-            This means you are free to borrow the <a
-              href="https://github.com/nerfies/nerfies.github.io">source code</a> of this website,
-            we just ask that you link back to this page in the footer.
-            Please remember to remove the analytics code included in the header of the website which
-            you do not want on your website.
-          </p>
         </div>
-      </div>
-    </div>
-  </div>
-</footer>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="content has-text-centered">
+                <a class="icon-link" href="./static/assets/DyVA.pdf" style="margin: 0 0.5rem; font-size: 1.5rem;">
+                    <i class="fas fa-file-pdf"></i>
+                </a>
+                <a class="icon-link" href="https://github.com/zyzkevin/dyva-worldlm"
+                    style="margin: 0 0.5rem; font-size: 1.5rem;">
+                    <i class="fab fa-github"></i>
+                </a>
+            </div>
+            <div class="columns is-centered" style="margin-top: 2rem;">
+                <div class="column is-8 has-text-centered">
+                    <div class="content">
+                        <p>
+                            This website is licensed under a <a rel="license"
+                                href="http://creativecommons.org/licenses/by-sa/4.0/">Creative
+                                Commons Attribution-ShareAlike 4.0 International License</a>.
+                        </p>
+                        <p>
+                            This website template is adapted from <a
+                                href="https://github.com/nerfies/nerfies.github.io">Nerfies</a>.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
 
 </body>
+
 </html>
